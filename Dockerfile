@@ -3,8 +3,6 @@ FROM ubuntu:16.04
 ENV HOME /root
 ENV DEBIAN_FRONTEND noninteractive
 
-ENV NUCLIDE_VERSION 0.249.0
-
 RUN apt-get update -qq
 
 # Install and configre SSH server
@@ -33,9 +31,8 @@ RUN curl -sL https://deb.nodesource.com/setup_6.x | bash -
 RUN apt-get install -y nodejs
 
 # Install Nuclide Remote Server
+ENV NUCLIDE_VERSION 0.302.0
 RUN npm install -g nuclide@${NUCLIDE_VERSION}
 
 # Start ssh service
 CMD ["/usr/sbin/sshd", "-D"]
-
-
