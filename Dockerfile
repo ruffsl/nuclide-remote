@@ -1,38 +1,37 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
-ENV HOME /root
-ENV DEBIAN_FRONTEND noninteractive
-
-RUN apt-get update -qq
-
-# Install and configre SSH server
-RUN apt-get install -y openssh-server
-RUN mkdir /var/run/sshd
-RUN echo 'root:nuclide' | chpasswd
-RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
-ENV NOTVISIBLE "in users profile"
-RUN echo "export VISIBLE=now" >> /etc/profile
-
-# Install Dev SDK
-RUN apt-get -y install gcc make autoconf git python-dev libpython-dev
+# Install dependencies
+RUN apt-get update && apt-get install -q -y \
+			autoconf \
+			automake \
+			curl \
+	    git \
+			libssl-dev \
+			libtool \
+			pkg-config \
+			python-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Watchman
-RUN git clone https://github.com/facebook/watchman.git \
-	&& cd watchman \
-	&& git checkout v4.5.0 \
-	&& ./autogen.sh \
-	&& ./configure \
-	&& make && make install
+ENV WATCHMAN_VERSION v4.9.0
+RUN	git clone https://github.com/facebook/watchman.git \
+		&& cd watchman \
+		&& git checkout ${WATCHMAN_VERSION} \
+		&& ./autogen.sh \
+		&& ./configure \
+		&& make -j$(nproc) \
+		&& make install
 
 # Install Node.js
-RUN apt-get install -y curl
-RUN curl -sL https://deb.nodesource.com/setup_6.x | bash -
-RUN apt-get install -y nodejs
+ENV NODE_VERSION 10
+RUN curl -sL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - \
+		&& apt-get install -y \
+			nodejs \
+		&& rm -rf /var/lib/apt/lists/*
 
 # Install Nuclide Remote Server
-ENV NUCLIDE_VERSION 0.302.0
+ENV NUCLIDE_VERSION 0.351.0
 RUN npm install -g nuclide@${NUCLIDE_VERSION}
 
-# Start ssh service
-CMD ["/usr/sbin/sshd", "-D"]
+# Run nuclide-start-server
+ENTRYPOINT ["nuclide-start-server"]

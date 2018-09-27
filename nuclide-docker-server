@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -e
+
+USER_UID=$(id -u)
+
+WORKSPACE=${HOME}
+docker run -it \
+    --net=host \
+    --workdir=${WORKSPACE} \
+    --user=${USER_UID}:${USER_UID} \
+    --volume=/etc/passwd:/etc/passwd:ro \
+    --volume=${WORKSPACE}:${WORKSPACE}:rw \
+    --volume=/tmp:/tmp:rw \
+    nuclide-remote "$@"
+
+#Alternatively
+# WORKSPACE=<some/path/here>
+# docker run -it \
+#     -p 9090:9090 \
+#     --workdir=${WORKSPACE} \
+#     --user=${USER_UID}:${USER_UID} \
+#     --volume=/etc/passwd:/etc/passwd:ro \
+#     --volume=${WORKSPACE}:${WORKSPACE}:rw \
+#     --volume=/tmp/nuclide-${USER}-logs:/tmp/nuclide-${USER}-logs:rw \
+#     --volume=${HOME}/.certs:--volume=${HOME}/.certs:rw \
+#     nuclide-remote "$@"
